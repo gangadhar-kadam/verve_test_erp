@@ -9,10 +9,17 @@
  "document_type": "Master", 
  "fields": [
   {
-   "description": "Will not allow to make time logs outside \"Workstation operation timings\"", 
-   "fieldname": "dont_allow_overtime", 
+   "fieldname": "capacity_planning", 
+   "fieldtype": "Section Break", 
+   "label": "Capacity Planning", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Plan time logs outside Workstation Working Hours.", 
+   "fieldname": "allow_overtime", 
    "fieldtype": "Check", 
-   "label": "Don't allow overtime", 
+   "label": "Allow Overtime", 
    "permlevel": 0, 
    "precision": ""
   }, 
@@ -34,11 +41,18 @@
   }, 
   {
    "default": "30", 
-   "description": "Delay in start time of production order operations if automatically make time logs is used.\n(in mins)", 
-   "fieldname": "operations_start_delay", 
-   "fieldtype": "Float", 
-   "in_list_view": 1, 
-   "label": "Operations Start Delay", 
+   "description": "Try planning operations for X days in advance.", 
+   "fieldname": "capacity_planning_for_days", 
+   "fieldtype": "Data", 
+   "label": "Capacity Planning For (Days)", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Default 10 mins", 
+   "fieldname": "mins_between_operations", 
+   "fieldtype": "Data", 
+   "label": "Time Between Operations (in mins)", 
    "permlevel": 0, 
    "precision": ""
   }
@@ -51,7 +65,7 @@
  "is_submittable": 0, 
  "issingle": 1, 
  "istable": 0, 
- "modified": "2015-02-05 05:11:41.192126", 
+ "modified": "2015-02-23 23:44:45.917027", 
  "modified_by": "Administrator", 
  "module": "Manufacturing", 
  "name": "Manufacturing Settings", 

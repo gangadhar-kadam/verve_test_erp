@@ -145,6 +145,11 @@ erpnext.stock.StockEntry = erpnext.stock.StockController.extend({
 		var d = locals[cdt][cdn];
 		d.transfer_qty = flt(d.qty) * flt(d.conversion_factor);
 		refresh_field('items');
+		calculate_total(doc, cdt, cdn);
+	},
+
+	incoming_rate: function(doc, cdt, cdn) {
+		calculate_total(doc, cdt, cdn);
 	},
 
 	production_order: function() {
@@ -269,7 +274,7 @@ erpnext.stock.StockEntry = erpnext.stock.StockController.extend({
 	},
 
 	items_on_form_rendered: function(doc, grid_row) {
-		erpnext.setup_serial_no(grid_row)
+		erpnext.setup_serial_no();
 	},
 
 	customer: function() {
@@ -384,9 +389,9 @@ cur_frm.fields_dict['items'].grid.get_field('batch_no').get_query = function(doc
 		return{
 			query: "erpnext.stock.doctype.stock_entry.stock_entry.get_batch_no",
 			filters:{
-				'item_code': d.item_code,
-				's_warehouse': d.s_warehouse,
-				'posting_date': doc.posting_date
+				'item_code'		: d.item_code,
+				's_warehouse'	: d.s_warehouse,
+				'posting_date'	: doc.posting_date
 			}
 		}
 	} else {
@@ -398,19 +403,44 @@ cur_frm.cscript.item_code = function(doc, cdt, cdn) {
 	var d = locals[cdt][cdn];
 	if(d.item_code) {
 		args = {
-			'item_code'		: d.item_code,
-			'warehouse'		: cstr(d.s_warehouse) || cstr(d.t_warehouse),
+			'item_code'			: d.item_code,
+			'warehouse'			: cstr(d.s_warehouse) || cstr(d.t_warehouse),
 			'transfer_qty'		: d.transfer_qty,
-			'serial_no'		: d.serial_no,
-			'bom_no'		: d.bom_no,
+			'serial_no	'		: d.serial_no,
+			'bom_no'			: d.bom_no,
 			'expense_account'	: d.expense_account,
 			'cost_center'		: d.cost_center,
-			'company'		: cur_frm.doc.company
+			'company'			: cur_frm.doc.company
 		};
-		return get_server_fields('get_item_details', JSON.stringify(args),
-			'items', doc, cdt, cdn, 1);
+		return frappe.call({
+			doc: cur_frm.doc,
+			method: "get_item_details",
+			args: args,
+			callback: function(r) {
+				if(r.message) {
+					$.each(r.message, function(k, v) {
+						frappe.model.set_value(cdt, cdn, k, v);
+					});
+				refresh_field('image_view', d.name, 'items');
+				}
+			}
+		});
 	}
+}
 
+cur_frm.cscript.barcode = function(doc, cdt, cdn) {
+	var d = locals[cdt][cdn];
+	if (d.barcode) {
+		frappe.call({
+			method: "erpnext.stock.get_item_details.get_item_code",
+			args: {"barcode": d.barcode },
+			callback: function(r) {
+				if (!r.exe){
+					frappe.model.set_value(cdt, cdn, "item_code", r.message);
+				}
+			}
+		});
+	}
 }
 
 cur_frm.cscript.s_warehouse = function(doc, cdt, cdn) {
@@ -475,4 +505,17 @@ cur_frm.cscript.company = function(doc, cdt, cdn) {
 
 cur_frm.cscript.posting_date = function(doc, cdt, cdn){
 	erpnext.get_fiscal_year(doc.company, doc.posting_date);
+}
+
+var calculate_total = function(doc, cdt, cdn){
+	var d = locals[cdt][cdn];
+	amount = flt(d.incoming_rate) * flt(d.transfer_qty)
+	frappe.model.set_value(cdt, cdn, 'amount', amount);
+	var total_amount = 0.0;
+	var items = doc.items || [];
+	for(var i=0;i<items.length;i++) {
+		total_amount += flt(items[i].amount);
+	}
+	doc.total_amount = total_amount;
+	refresh_field("total_amount");
 }

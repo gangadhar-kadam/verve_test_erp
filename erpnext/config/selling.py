@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from frappe import _
 
 def get_data():
@@ -8,18 +9,8 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "Lead",
-					"description": _("Database of potential customers."),
-				},
-				{
-					"type": "doctype",
 					"name": "Customer",
 					"description": _("Customer database."),
-				},
-				{
-					"type": "doctype",
-					"name": "Opportunity",
-					"description": _("Potential opportunities for selling."),
 				},
 				{
 					"type": "doctype",

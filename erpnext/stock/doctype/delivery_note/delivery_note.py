@@ -67,16 +67,13 @@ class DeliveryNote(SellingController):
 
 		item_meta = frappe.get_meta("Delivery Note Item")
 		print_hide_fields = {
-			"parent": ["grand_total_export", "rounded_total_export", "in_words_export", "currency", "net_total_export"],
+			"parent": ["grand_total", "rounded_total", "in_words", "currency", "net_total"],
 			"items": ["rate", "amount", "price_list_rate", "discount_percentage"]
 		}
 
 		for key, fieldname in print_hide_fields.items():
 			for f in fieldname:
 				toggle_print_hide(self.meta if key == "parent" else item_meta, f)
-
-	def get_portal_page(self):
-		return "shipment" if self.docstatus==1 else None
 
 	def set_actual_qty(self):
 		for d in self.get('items'):
@@ -186,7 +183,7 @@ class DeliveryNote(SellingController):
 		self.validate_packed_qty()
 
 		# Check for Approving Authority
-		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype, self.company, self.grand_total, self)
+		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype, self.company, self.base_grand_total, self)
 
 		# update delivered qty in sales order
 		self.update_prevdoc_status()
@@ -287,6 +284,13 @@ class DeliveryNote(SellingController):
 				"is_amended": self.amended_from and 'Yes' or 'No'
 			}
 			update_bin(args)
+
+	@staticmethod
+	def get_list_context(context=None):
+		from erpnext.controllers.website_list_for_contact import get_list_context
+		list_context = get_list_context(context)
+		list_context["title"] = _("My Shipments")
+		return list_context
 
 def get_invoiced_qty_map(delivery_note):
 	"""returns a map: {dn_detail: invoiced_qty}"""

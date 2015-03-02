@@ -29,7 +29,7 @@ class Opportunity(TransactionBase):
 		self.validate_cust_name()
 
 		from erpnext.accounts.utils import validate_fiscal_year
-		validate_fiscal_year(self.transaction_date, self.fiscal_year, "Opportunity Date")
+		validate_fiscal_year(self.transaction_date, self.fiscal_year, _("Opportunity Date"), self)
 
 	def on_submit(self):
 		if self.lead:
@@ -52,25 +52,16 @@ class Opportunity(TransactionBase):
 
 	def has_quotation(self):
 		return frappe.db.get_value("Quotation Item", {"prevdoc_docname": self.name, "docstatus": 1})
-		
+
 	def has_ordered_quotation(self):
-		return frappe.db.sql("""select q.name from `tabQuotation` q, `tabQuotation Item` qi 
+		return frappe.db.sql("""select q.name from `tabQuotation` q, `tabQuotation Item` qi
 			where q.name = qi.parent and q.docstatus=1 and qi.prevdoc_docname =%s and q.status = 'Ordered'""", self.name)
-			
+
 	def validate_cust_name(self):
-		self.customer_name = self.customer or self.lead
-		
-	def get_item_details(self, item_code):
-		item = frappe.db.sql("""select item_name, stock_uom, description_html, description, item_group, brand
-			from `tabItem` where name = %s""", item_code, as_dict=1)
-		ret = {
-			'item_name': item and item[0]['item_name'] or '',
-			'uom': item and item[0]['stock_uom'] or '',
-			'description': item and item[0]['description_html'] or item[0]['description'] or '',
-			'item_group': item and item[0]['item_group'] or '',
-			'brand': item and item[0]['brand'] or ''
-		}
-		return ret
+		if self.customer:
+			self.customer_name = frappe.db.get_value("Customer", self.customer, "customer_name")
+		elif self.lead:
+			self.customer_name = frappe.db.get_value("Lead", self.lead, "lead_name")
 
 	def get_cust_address(self,name):
 		details = frappe.db.sql("""select customer_name, address, territory, customer_group
@@ -129,6 +120,14 @@ class Opportunity(TransactionBase):
 		if not self.get('items'):
 			frappe.throw(_("Items required"))
 
+		# set missing values
+		item_fields = ("item_name", "description", "item_group", "brand")
+
+		for d in self.items:
+			item = frappe.db.get_value("Item", d.item_code, item_fields, as_dict=True)
+			for key in item_fields:
+				if not d.get(key): d.set(key, item.get(key))
+
 	def validate_lead_cust(self):
 		if self.enquiry_from == 'Lead':
 			if not self.lead:
@@ -140,7 +139,20 @@ class Opportunity(TransactionBase):
 				msgprint("Customer is mandatory if 'Opportunity From' is selected as Customer", raise_exception=1)
 			else:
 				self.lead = None
-		
+
+@frappe.whitelist()
+def get_item_details(item_code):
+	item = frappe.db.sql("""select item_name, stock_uom, image, description, item_group, brand
+		from `tabItem` where name = %s""", item_code, as_dict=1)
+	return {
+		'item_name': item and item[0]['item_name'] or '',
+		'uom': item and item[0]['stock_uom'] or '',
+		'description': item and item[0]['description'] or '',
+		'image': item and item[0]['image'] or '',
+		'item_group': item and item[0]['item_group'] or '',
+		'brand': item and item[0]['brand'] or ''
+	}
+
 @frappe.whitelist()
 def make_quotation(source_name, target_doc=None):
 	def set_missing_values(source, target):

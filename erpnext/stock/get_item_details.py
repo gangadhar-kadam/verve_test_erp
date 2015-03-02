@@ -96,6 +96,7 @@ def process_args(args):
 
 	return args
 
+@frappe.whitelist()
 def get_item_code(barcode=None, serial_no=None):
 	if barcode:
 		item_code = frappe.db.get_value("Item", {"barcode": barcode})
@@ -124,6 +125,9 @@ def validate_item_details(args, item):
 		elif item.is_sales_item != "Yes":
 			throw(_("Item {0} must be a Sales Item").format(item.name))
 
+		if cint(item.has_variants):
+			throw(_("Item {0} is a template, please select one of its variants").format(item.name))
+
 	elif args.transaction_type == "buying" and args.parenttype != "Material Request":
 		# validate if purchase item or subcontracted item
 		if item.is_purchase_item != "Yes":
@@ -147,7 +151,8 @@ def get_basic_details(args, item):
 	out = frappe._dict({
 		"item_code": item.name,
 		"item_name": item.item_name,
-		"description": cstr(item.description_html).strip() or cstr(item.description).strip(),
+		"description": cstr(item.description).strip(),
+		"image": cstr(item.image).strip(),
 		"warehouse": user_default_warehouse or args.warehouse or item.default_warehouse,
 		"income_account": get_default_income_account(args, item),
 		"expense_account": get_default_expense_account(args, item),
@@ -166,8 +171,17 @@ def get_basic_details(args, item):
 		"base_rate": 0.0,
 		"amount": 0.0,
 		"base_amount": 0.0,
+		"net_rate": 0.0,
+		"net_amount": 0.0,
 		"discount_percentage": 0.0
 	})
+
+	# if default specified in item is for another company, fetch from company
+	for d in [["Account", "income_account", "default_income_account"], ["Account", "expense_account", "default_expense_account"],
+		["Cost Center", "cost_center", "cost_center"], ["Warehouse", "warehouse", ""]]:
+			company = frappe.db.get_value(d[0], out.get(d[1]), "company")
+			if not out[d[1]] or (company and args.company != company):
+				out[d[1]] = frappe.db.get_value("Company", args.company, d[2]) if d[2] else None
 
 	for fieldname in ("item_name", "item_group", "barcode", "brand", "stock_uom"):
 		out[fieldname] = item.get(fieldname)
@@ -177,20 +191,17 @@ def get_basic_details(args, item):
 def get_default_income_account(args, item):
 	return (item.income_account
 		or args.income_account
-		or frappe.db.get_value("Item Group", item.item_group, "default_income_account")
-		or frappe.db.get_value("Company", args.company, "default_income_account"))
+		or frappe.db.get_value("Item Group", item.item_group, "default_income_account"))
 
 def get_default_expense_account(args, item):
 	return (item.expense_account
 		or args.expense_account
-		or frappe.db.get_value("Item Group", item.item_group, "default_expense_account")
-		or frappe.db.get_value("Company", args.company, "default_expense_account"))
+		or frappe.db.get_value("Item Group", item.item_group, "default_expense_account"))
 
 def get_default_cost_center(args, item):
 	return (frappe.db.get_value("Project", args.get("project_name"), "cost_center")
 		or (item.selling_cost_center if args.get("transaction_type") == "selling" else item.buying_cost_center)
-		or frappe.db.get_value("Item Group", item.item_group, "default_cost_center")
-		or frappe.db.get_value("Company", args.get("company"), "cost_center"))
+		or frappe.db.get_value("Item Group", item.item_group, "default_cost_center"))
 
 def get_price_list_rate(args, item_doc, out):
 	meta = frappe.get_meta(args.parenttype)
@@ -198,7 +209,6 @@ def get_price_list_rate(args, item_doc, out):
 	if meta.get_field("currency"):
 		validate_price_list(args)
 		validate_conversion_rate(args, meta)
-
 
 		price_list_rate = get_price_list_rate_for(args, item_doc.name)
 		if not price_list_rate and item_doc.variant_of:

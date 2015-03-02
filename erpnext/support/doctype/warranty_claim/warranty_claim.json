@@ -8,7 +8,7 @@
   {
    "fieldname": "customer_section", 
    "fieldtype": "Section Break", 
-   "label": "Customer", 
+   "label": "", 
    "options": "icon-user", 
    "permlevel": 0
   }, 
@@ -60,6 +60,15 @@
    "width": "50%"
   }, 
   {
+   "description": "", 
+   "fieldname": "serial_no", 
+   "fieldtype": "Link", 
+   "in_list_view": 0, 
+   "label": "Serial No", 
+   "options": "Serial No", 
+   "permlevel": 0
+  }, 
+  {
    "fieldname": "customer", 
    "fieldtype": "Link", 
    "in_filter": 1, 
@@ -92,7 +101,7 @@
   {
    "fieldname": "issue_details", 
    "fieldtype": "Section Break", 
-   "label": "Issue Details", 
+   "label": "", 
    "oldfieldtype": "Section Break", 
    "options": "icon-ticket", 
    "permlevel": 0
@@ -106,15 +115,6 @@
    "oldfieldtype": "Small Text", 
    "permlevel": 0, 
    "reqd": 1
-  }, 
-  {
-   "description": "Item, Warranty, AMC (Annual Maintenance Contract) details will be automatically fetched when Serial Number is selected.", 
-   "fieldname": "serial_no", 
-   "fieldtype": "Link", 
-   "in_list_view": 0, 
-   "label": "Serial No", 
-   "options": "Serial No", 
-   "permlevel": 0
   }, 
   {
    "fieldname": "item_code", 
@@ -396,7 +396,7 @@
  "icon": "icon-bug", 
  "idx": 1, 
  "is_submittable": 0, 
- "modified": "2015-02-17 00:12:52.430072", 
+ "modified": "2015-02-21 04:11:40.653543", 
  "modified_by": "Administrator", 
  "module": "Support", 
  "name": "Warranty Claim", 

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import frappe
 import frappe.utils
 from frappe.utils import cstr, flt, getdate, comma_and
-from frappe import _ , msgprint
+from frappe import _
 from frappe.model.mapper import get_mapped_doc
 
 from erpnext.controllers.selling_controller import SellingController
@@ -142,7 +142,7 @@ class SalesOrder(SellingController):
 		self.check_credit_limit()
 		self.update_stock_ledger(update_stock = 1)
 
-		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype, self.grand_total, self)
+		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype, self.base_grand_total, self)
 
 		self.update_prevdoc_status('submit')
 		frappe.db.set(self, 'status', 'Submitted')
@@ -231,8 +231,12 @@ class SalesOrder(SellingController):
 	def on_update(self):
 		pass
 
-	def get_portal_page(self):
-		return "order" if self.docstatus==1 else None
+	@staticmethod
+	def get_list_context(context=None):
+		from erpnext.controllers.website_list_for_contact import get_list_context
+		list_context = get_list_context(context)
+		list_context["title"] = _("My Orders")
+		return list_context
 
 @frappe.whitelist()
 def make_material_request(source_name, target_doc=None):

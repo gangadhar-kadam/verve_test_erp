@@ -3,7 +3,6 @@
 
 frappe.provide("erpnext.accounts");
 {% include 'buying/doctype/purchase_common/purchase_common.js' %};
-{% include 'accounts/doctype/purchase_taxes_and_charges_master/purchase_taxes_and_charges_master.js' %}
 
 erpnext.accounts.PurchaseInvoice = erpnext.buying.BuyingController.extend({
 	onload: function() {
@@ -94,7 +93,7 @@ erpnext.accounts.PurchaseInvoice = erpnext.buying.BuyingController.extend({
 	},
 
 	allocated_amount: function() {
-		this.calculate_total_advance("Purchase Invoice", "advances");
+		this.calculate_total_advance();
 		this.frm.refresh_fields();
 	},
 

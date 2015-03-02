@@ -36,3 +36,15 @@ $(function() {
 </script>
 
 {% endblock %}
+
+{% block style %}
+<style>
+	.product-image.missing-image {
+		border: 1px dashed {{ theme.border_color or "#d1d8dd" }};
+	}
+
+	.product-image.missing-image .octicon {
+		color: {{ theme.border_color or "#d1d8dd" }};
+	}
+</style>
+{% endblock %}

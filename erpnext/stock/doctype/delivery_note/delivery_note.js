@@ -2,7 +2,6 @@
 // License: GNU General Public License v3. See license.txt
 
 {% include 'selling/sales_common.js' %};
-{% include 'accounts/doctype/sales_taxes_and_charges_master/sales_taxes_and_charges_master.js' %}
 
 frappe.provide("erpnext.stock");
 frappe.provide("erpnext.stock.delivery_note");
@@ -25,7 +24,7 @@ erpnext.stock.DeliveryNoteController = erpnext.selling.SellingController.extend(
 			cur_frm.add_custom_button(__('Make Installation Note'), this.make_installation_note);
 
 		if (doc.docstatus==1) {
-			cur_frm.add_custom_button(__('Send SMS'), cur_frm.cscript.send_sms, "icon-mobile-phone");
+
 			this.show_stock_ledger();
 			this.show_general_ledger();
 		}
@@ -80,7 +79,7 @@ erpnext.stock.DeliveryNoteController = erpnext.selling.SellingController.extend(
 	},
 
 	items_on_form_rendered: function(doc, grid_row) {
-		erpnext.setup_serial_no(grid_row)
+		erpnext.setup_serial_no();
 	}
 
 });
@@ -131,6 +130,7 @@ erpnext.stock.delivery_note.set_print_hide = function(doc, cdt, cdn){
 		dn_item_fields['discount_percentage'].print_hide = 1;
 		dn_item_fields['price_list_rate'].print_hide = 1;
 		dn_item_fields['amount'].print_hide = 1;
+		dn_fields['taxes'].print_hide = 1;
 	} else {
 		if (dn_fields_copy['currency'].print_hide != 1)
 			dn_fields['currency'].print_hide = 0;
@@ -138,6 +138,8 @@ erpnext.stock.delivery_note.set_print_hide = function(doc, cdt, cdn){
 			dn_item_fields['rate'].print_hide = 0;
 		if (dn_item_fields_copy['amount'].print_hide != 1)
 			dn_item_fields['amount'].print_hide = 0;
+		if (dn_fields_copy['taxes'].print_hide != 1)
+			dn_fields['taxes'].print_hide = 0;
 	}
 }
 
@@ -240,8 +242,5 @@ if (sys_defaults.auto_accounting_for_stock) {
 	}
 }
 
-cur_frm.cscript.send_sms = function() {
-	frappe.require("assets/erpnext/js/sms_manager.js");
-	var sms_man = new SMSManager(cur_frm.doc);
-}
+
 

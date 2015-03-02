@@ -55,6 +55,7 @@ class SalesInvoice(SellingController):
 
 		if cint(self.update_stock):
 			self.validate_item_code()
+			self.validate_warehouse()
 			self.update_current_stock()
 			self.validate_delivery_note()
 
@@ -77,7 +78,7 @@ class SalesInvoice(SellingController):
 			# Check for Approving Authority
 			if not self.recurring_id:
 				frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype,
-				 	self.company, self.grand_total, self)
+				 	self.company, self.base_grand_total, self)
 
 		self.check_prev_docstatus()
 
@@ -133,9 +134,6 @@ class SalesInvoice(SellingController):
 				'extra_cond': """ and exists(select name from `tabSales Invoice`
 					where name=`tabSales Invoice Item`.parent and ifnull(update_stock, 0) = 1)"""
 			})
-
-	def get_portal_page(self):
-		return "invoice" if self.docstatus==1 else None
 
 	def set_missing_values(self, for_validate=False):
 		self.set_pos_fields(for_validate)
@@ -329,7 +327,7 @@ class SalesInvoice(SellingController):
 			frappe.throw(_("Cash or Bank Account is mandatory for making payment entry"))
 
 		if flt(self.paid_amount) + flt(self.write_off_amount) \
-				- flt(self.grand_total) > 1/(10**(self.precision("grand_total") + 1)):
+				- flt(self.base_grand_total) > 1/(10**(self.precision("base_grand_total") + 1)):
 			frappe.throw(_("""Paid amount + Write Off Amount can not be greater than Grand Total"""))
 
 
@@ -337,6 +335,11 @@ class SalesInvoice(SellingController):
 		for d in self.get('items'):
 			if not d.item_code:
 				msgprint(_("Item Code required at Row No {0}").format(d.idx), raise_exception=True)
+
+	def validate_warehouse(self):
+		for d in self.get('items'):
+			if not d.warehouse:
+				frappe.throw(_("Warehouse required at Row No {0}").format(d.idx))
 
 	def validate_delivery_note(self):
 		for d in self.get("items"):
@@ -410,7 +413,7 @@ class SalesInvoice(SellingController):
 			if flt(self.paid_amount) == 0:
 				if self.cash_bank_account:
 					frappe.db.set(self, 'paid_amount',
-						(flt(self.grand_total) - flt(self.write_off_amount)))
+						(flt(self.base_grand_total) - flt(self.write_off_amount)))
 				else:
 					# show message that the amount is not paid
 					frappe.db.set(self,'paid_amount',0)
@@ -483,14 +486,14 @@ class SalesInvoice(SellingController):
 		return gl_entries
 
 	def make_customer_gl_entry(self, gl_entries):
-		if self.grand_total:
+		if self.base_grand_total:
 			gl_entries.append(
 				self.get_gl_dict({
 					"account": self.debit_to,
 					"party_type": "Customer",
 					"party": self.customer,
 					"against": self.against_income_account,
-					"debit": self.grand_total,
+					"debit": self.base_grand_total,
 					"remarks": self.remarks,
 					"against_voucher": self.name,
 					"against_voucher_type": self.doctype,
@@ -499,12 +502,12 @@ class SalesInvoice(SellingController):
 
 	def make_tax_gl_entries(self, gl_entries):
 		for tax in self.get("taxes"):
-			if flt(tax.tax_amount_after_discount_amount):
+			if flt(tax.base_tax_amount_after_discount_amount):
 				gl_entries.append(
 					self.get_gl_dict({
 						"account": tax.account_head,
 						"against": self.debit_to,
-						"credit": flt(tax.tax_amount_after_discount_amount),
+						"credit": flt(tax.base_tax_amount_after_discount_amount),
 						"remarks": self.remarks,
 						"cost_center": tax.cost_center
 					})
@@ -513,12 +516,12 @@ class SalesInvoice(SellingController):
 	def make_item_gl_entries(self, gl_entries):
 		# income account gl entries
 		for item in self.get("items"):
-			if flt(item.base_amount):
+			if flt(item.base_net_amount):
 				gl_entries.append(
 					self.get_gl_dict({
 						"account": item.income_account,
 						"against": self.debit_to,
-						"credit": item.base_amount,
+						"credit": item.base_net_amount,
 						"remarks": self.remarks,
 						"cost_center": item.cost_center
 					})
@@ -575,6 +578,13 @@ class SalesInvoice(SellingController):
 						"cost_center": self.write_off_cost_center
 					})
 				)
+
+	@staticmethod
+	def get_list_context(context=None):
+		from erpnext.controllers.website_list_for_contact import get_list_context
+		list_context = get_list_context(context)
+		list_context["title"] = _("My Invoices")
+		return list_context
 
 @frappe.whitelist()
 def get_bank_cash_account(mode_of_payment, company):

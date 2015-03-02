@@ -11,7 +11,7 @@
   {
    "fieldname": "details", 
    "fieldtype": "Section Break", 
-   "label": "Details", 
+   "label": "", 
    "permlevel": 0, 
    "precision": ""
   }, 
@@ -40,7 +40,7 @@
   }, 
   {
    "allow_on_submit": 0, 
-   "fieldname": "opn_description", 
+   "fieldname": "description", 
    "fieldtype": "Text", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
@@ -125,6 +125,15 @@
    "unique": 0
   }, 
   {
+   "allow_on_submit": 1, 
+   "depends_on": "eval:(doc.docstatus==1 && doc.status!=\"Completed\")", 
+   "fieldname": "show_time_logs", 
+   "fieldtype": "Button", 
+   "label": "Show Time Logs", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
    "fieldname": "estimated_time_and_cost", 
    "fieldtype": "Section Break", 
    "label": "Estimated Time and Cost", 
@@ -139,7 +148,8 @@
    "no_copy": 1, 
    "permlevel": 0, 
    "precision": "", 
-   "reqd": 1
+   "read_only": 1, 
+   "reqd": 0
   }, 
   {
    "fieldname": "planned_end_time", 
@@ -149,7 +159,8 @@
    "no_copy": 1, 
    "permlevel": 0, 
    "precision": "", 
-   "reqd": 1
+   "read_only": 1, 
+   "reqd": 0
   }, 
   {
    "fieldname": "column_break_10", 
@@ -266,7 +277,6 @@
    "read_only": 1
   }, 
   {
-   "allow_on_submit": 1, 
    "depends_on": "eval:(doc.docstatus==1 && doc.status!=\"Completed\")", 
    "fieldname": "make_time_log", 
    "fieldtype": "Button", 
@@ -282,7 +292,7 @@
  "is_submittable": 0, 
  "issingle": 0, 
  "istable": 1, 
- "modified": "2015-02-13 16:26:30.441657", 
+ "modified": "2015-02-24 00:27:44.651084", 
  "modified_by": "Administrator", 
  "module": "Manufacturing", 
  "name": "Production Order Operation", 

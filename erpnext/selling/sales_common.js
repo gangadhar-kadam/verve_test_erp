@@ -2,10 +2,11 @@
 // License: GNU General Public License v3. See license.txt
 
 
-frappe.provide("erpnext.selling");
-frappe.require("assets/erpnext/js/transaction.js");
+cur_frm.cscript.tax_table = "Sales Taxes and Charges";
+{% include 'accounts/doctype/sales_taxes_and_charges_master/sales_taxes_and_charges_master.js' %}
 
-{% include "public/js/controllers/accounts.js" %}
+frappe.provide("erpnext.selling");
+frappe.require("assets/erpnext/js/controllers/transaction.js");
 
 cur_frm.email_field = "contact_email";
 
@@ -14,10 +15,6 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 		this._super();
 		this.setup_queries();
 		this.toggle_editable_price_list_rate();
-	},
-
-	onload_post_render: function() {
-		cur_frm.get_field("items").grid.set_multiple_add("item_code", "qty");
 	},
 
 	setup_queries: function() {
@@ -154,44 +151,26 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 		}
 	},
 
-	rate: function(doc, cdt, cdn) {
-		var item = frappe.get_doc(cdt, cdn);
-		frappe.model.round_floats_in(item, ["rate", "price_list_rate"]);
-
-		if(item.price_list_rate) {
-			item.discount_percentage = flt((1 - item.rate / item.price_list_rate) * 100.0,
-				precision("discount_percentage", item));
-		} else {
-			item.discount_percentage = 0.0;
-		}
-
-		this.calculate_taxes_and_totals();
-	},
-
-	discount_amount: function() {
-		this.calculate_taxes_and_totals();
-	},
-
 	commission_rate: function() {
 		this.calculate_commission();
 		refresh_field("total_commission");
 	},
 
 	total_commission: function() {
-		if(this.frm.doc.net_total) {
-			frappe.model.round_floats_in(this.frm.doc, ["net_total", "total_commission"]);
+		if(this.frm.doc.base_net_total) {
+			frappe.model.round_floats_in(this.frm.doc, ["base_net_total", "total_commission"]);
 
-			if(this.frm.doc.net_total < this.frm.doc.total_commission) {
+			if(this.frm.doc.base_net_total < this.frm.doc.total_commission) {
 				var msg = (__("[Error]") + " " +
 					__(frappe.meta.get_label(this.frm.doc.doctype, "total_commission",
 						this.frm.doc.name)) + " > " +
-					__(frappe.meta.get_label(this.frm.doc.doctype, "net_total", this.frm.doc.name)));
+					__(frappe.meta.get_label(this.frm.doc.doctype, "base_net_total", this.frm.doc.name)));
 				msgprint(msg);
 				throw msg;
 			}
 
 			this.frm.set_value("commission_rate",
-				flt(this.frm.doc.total_commission * 100.0 / this.frm.doc.net_total));
+				flt(this.frm.doc.total_commission * 100.0 / this.frm.doc.base_net_total));
 		}
 	},
 
@@ -201,7 +180,7 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 		if(sales_person.allocated_percentage) {
 			sales_person.allocated_percentage = flt(sales_person.allocated_percentage,
 				precision("allocated_percentage", sales_person));
-			sales_person.allocated_amount = flt(this.frm.doc.net_total *
+			sales_person.allocated_amount = flt(this.frm.doc.base_net_total *
 				sales_person.allocated_percentage / 100.0,
 				precision("allocated_amount", sales_person));
 
@@ -233,185 +212,14 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 		}
 	},
 
-	calculate_taxes_and_totals: function(update_paid_amount) {
-		this._super();
-		this.calculate_total_advance("Sales Invoice", "advances", update_paid_amount);
-		this.calculate_commission();
-		this.calculate_contribution();
-
-		// TODO check for custom_recalc in custom scripts of server
-
-		this.frm.refresh_fields();
-	},
-
-	calculate_item_values: function() {
-		var me = this;
-
-		if (!this.discount_amount_applied) {
-			$.each(this.frm.doc["items"] || [], function(i, item) {
-				frappe.model.round_floats_in(item);
-				item.amount = flt(item.rate * item.qty, precision("amount", item));
-
-				me._set_in_company_currency(item, "price_list_rate", "base_price_list_rate");
-				me._set_in_company_currency(item, "rate", "base_rate");
-				me._set_in_company_currency(item, "amount", "base_amount");
-			});
-		}
-	},
-
-	determine_exclusive_rate: function() {
-		var me = this;
-		$.each(me.frm.doc["items"] || [], function(n, item) {
-			var item_tax_map = me._load_item_tax_rate(item.item_tax_rate);
-			var cumulated_tax_fraction = 0.0;
-
-			$.each(me.frm.doc["taxes"] || [], function(i, tax) {
-				tax.tax_fraction_for_current_item = me.get_current_tax_fraction(tax, item_tax_map);
-
-				if(i==0) {
-					tax.grand_total_fraction_for_current_item = 1 + tax.tax_fraction_for_current_item;
-				} else {
-					tax.grand_total_fraction_for_current_item =
-						me.frm.doc["taxes"][i-1].grand_total_fraction_for_current_item +
-						tax.tax_fraction_for_current_item;
-				}
-
-				cumulated_tax_fraction += tax.tax_fraction_for_current_item;
-			});
-
-			if(cumulated_tax_fraction && !me.discount_amount_applied) {
-				item.base_amount = flt(
-					(item.amount * me.frm.doc.conversion_rate) / (1 + cumulated_tax_fraction),
-					precision("base_amount", item));
-
-				item.base_rate = flt(item.base_amount / item.qty, precision("base_rate", item));
-
-				if(item.discount_percentage == 100) {
-					item.base_price_list_rate = item.base_rate;
-					item.base_rate = 0.0;
-				} else {
-					item.base_price_list_rate = flt(item.base_rate / (1 - item.discount_percentage / 100.0),
-						precision("base_price_list_rate", item));
-				}
-			}
-		});
-	},
-
-	get_current_tax_fraction: function(tax, item_tax_map) {
-		// Get tax fraction for calculating tax exclusive amount
-		// from tax inclusive amount
-		var current_tax_fraction = 0.0;
-
-		if(cint(tax.included_in_print_rate)) {
-			var tax_rate = this._get_tax_rate(tax, item_tax_map);
-
-			if(tax.charge_type == "On Net Total") {
-				current_tax_fraction = (tax_rate / 100.0);
-
-			} else if(tax.charge_type == "On Previous Row Amount") {
-				current_tax_fraction = (tax_rate / 100.0) *
-					this.frm.doc["taxes"][cint(tax.row_id) - 1].tax_fraction_for_current_item;
-
-			} else if(tax.charge_type == "On Previous Row Total") {
-				current_tax_fraction = (tax_rate / 100.0) *
-					this.frm.doc["taxes"][cint(tax.row_id) - 1].grand_total_fraction_for_current_item;
-			}
-		}
-
-		return current_tax_fraction;
-	},
-
-	calculate_net_total: function() {
-		var me = this;
-		this.frm.doc.net_total = this.frm.doc.net_total_export = 0.0;
-
-		$.each(this.frm.doc["items"] || [], function(i, item) {
-			me.frm.doc.net_total += item.base_amount;
-			me.frm.doc.net_total_export += item.amount;
-		});
-
-		frappe.model.round_floats_in(this.frm.doc, ["net_total", "net_total_export"]);
-	},
-
-	calculate_totals: function() {
-		var me = this;
-		var tax_count = this.frm.doc["taxes"] ? this.frm.doc["taxes"].length: 0;
-
-		this.frm.doc.grand_total = flt(tax_count ? this.frm.doc["taxes"][tax_count - 1].total : this.frm.doc.net_total);
-
-		this.frm.doc.other_charges_total = flt(this.frm.doc.grand_total - this.frm.doc.net_total,
-			precision("other_charges_total"));
-
-		this.frm.doc.grand_total_export = (this.frm.doc.other_charges_total || this.frm.doc.discount_amount) ?
-			flt(this.frm.doc.grand_total / this.frm.doc.conversion_rate) : this.frm.doc.net_total_export;
-
-		this.frm.doc.other_charges_total_export = flt(this.frm.doc.grand_total_export -
-			this.frm.doc.net_total_export + flt(this.frm.doc.discount_amount),
-			precision("other_charges_total_export"));
-
-		this.frm.doc.grand_total = flt(this.frm.doc.grand_total, precision("grand_total"));
-		this.frm.doc.grand_total_export = flt(this.frm.doc.grand_total_export, precision("grand_total_export"));
-
-		this.frm.doc.rounded_total = Math.round(this.frm.doc.grand_total);
-		this.frm.doc.rounded_total_export = Math.round(this.frm.doc.grand_total_export);
-	},
-
-	apply_discount_amount: function() {
-		var me = this;
-		var distributed_amount = 0.0;
-
-		if (this.frm.doc.discount_amount) {
-			this.frm.set_value("base_discount_amount",
-				flt(this.frm.doc.discount_amount * this.frm.doc.conversion_rate, precision("base_discount_amount")))
-
-			var grand_total_for_discount_amount = this.get_grand_total_for_discount_amount();
-			// calculate item amount after Discount Amount
-			if (grand_total_for_discount_amount) {
-				$.each(this.frm.doc["items"] || [], function(i, item) {
-					distributed_amount = flt(me.frm.doc.base_discount_amount) * item.base_amount / grand_total_for_discount_amount;
-					item.base_amount = flt(item.base_amount - distributed_amount, precision("base_amount", item));
-				});
-
-				this.discount_amount_applied = true;
-				this._calculate_taxes_and_totals();
-			}
-		} else {
-			this.frm.set_value("base_discount_amount", 0);
-		}
-	},
-
-	get_grand_total_for_discount_amount: function() {
-		var me = this;
-		var total_actual_tax = 0.0;
-		var actual_taxes_dict = {};
-
-		$.each(this.frm.doc["taxes"] || [], function(i, tax) {
-			if (tax.charge_type == "Actual")
-				actual_taxes_dict[tax.idx] = tax.tax_amount;
-			else if (actual_taxes_dict[tax.row_id] !== null) {
-				actual_tax_amount = flt(actual_taxes_dict[tax.row_id]) * flt(tax.rate) / 100;
-				actual_taxes_dict[tax.idx] = actual_tax_amount;
-			}
-		});
-
-		$.each(actual_taxes_dict, function(key, value) {
-			if (value)
-				total_actual_tax += value;
-		});
-
-		grand_total_for_discount_amount = flt(this.frm.doc.grand_total - total_actual_tax,
-			precision("grand_total"));
-		return grand_total_for_discount_amount;
-	},
-
 	calculate_outstanding_amount: function(update_paid_amount) {
 		// NOTE:
 		// paid_amount and write_off_amount is only for POS Invoice
 		// total_advance is only for non POS Invoice
 		if(this.frm.doc.doctype == "Sales Invoice" && this.frm.doc.docstatus==0) {
-			frappe.model.round_floats_in(this.frm.doc, ["grand_total", "total_advance", "write_off_amount",
+			frappe.model.round_floats_in(this.frm.doc, ["base_grand_total", "total_advance", "write_off_amount",
 				"paid_amount"]);
-			var total_amount_to_pay = this.frm.doc.grand_total - this.frm.doc.write_off_amount
+			var total_amount_to_pay = this.frm.doc.base_grand_total - this.frm.doc.write_off_amount
 				- this.frm.doc.total_advance;
 			if(this.frm.doc.is_pos) {
 				if(!this.frm.doc.paid_amount || update_paid_amount===undefined || update_paid_amount) {
@@ -437,7 +245,7 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 				throw msg;
 			}
 
-			this.frm.doc.total_commission = flt(this.frm.doc.net_total * this.frm.doc.commission_rate / 100.0,
+			this.frm.doc.total_commission = flt(this.frm.doc.base_net_total * this.frm.doc.commission_rate / 100.0,
 				precision("total_commission"));
 		}
 	},
@@ -448,15 +256,10 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 				frappe.model.round_floats_in(sales_person);
 				if(sales_person.allocated_percentage) {
 					sales_person.allocated_amount = flt(
-						me.frm.doc.net_total * sales_person.allocated_percentage / 100.0,
+						me.frm.doc.base_net_total * sales_person.allocated_percentage / 100.0,
 						precision("allocated_amount", sales_person));
 				}
 			});
-	},
-
-	_cleanup: function() {
-		this._super();
-		this.frm.doc.in_words = this.frm.doc.in_words_export = "";
 	},
 
 	shipping_rule: function() {
@@ -497,98 +300,6 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 			}
 		}
 		refresh_field('sales_bom_help');
-	},
-
-	change_form_labels: function(company_currency) {
-		var me = this;
-		var field_label_map = {};
-
-		var setup_field_label_map = function(fields_list, currency) {
-			$.each(fields_list, function(i, fname) {
-				var docfield = frappe.meta.docfield_map[me.frm.doc.doctype][fname];
-				if(docfield) {
-					var label = __(docfield.label || "").replace(/\([^\)]*\)/g, "");
-					field_label_map[fname] = label.trim() + " (" + currency + ")";
-				}
-			});
-		};
-		setup_field_label_map(["net_total", "other_charges_total", "base_discount_amount", "grand_total",
-			"rounded_total", "in_words",
-			"outstanding_amount", "total_advance", "paid_amount", "write_off_amount"],
-			company_currency);
-
-		setup_field_label_map(["net_total_export", "other_charges_total_export", "discount_amount", "grand_total_export",
-			"rounded_total_export", "in_words_export"], this.frm.doc.currency);
-
-		cur_frm.set_df_property("conversion_rate", "description", "1 " + this.frm.doc.currency
-			+ " = [?] " + company_currency)
-
-		if(this.frm.doc.price_list_currency && this.frm.doc.price_list_currency!=company_currency) {
-			cur_frm.set_df_property("plc_conversion_rate", "description", "1 " + this.frm.doc.price_list_currency
-				+ " = [?] " + company_currency)
-		}
-
-		// toggle fields
-		this.frm.toggle_display(["conversion_rate", "net_total", "other_charges_total",
-			"grand_total", "rounded_total", "in_words", "base_discount_amount"],
-			this.frm.doc.currency != company_currency);
-
-		this.frm.toggle_display(["plc_conversion_rate", "price_list_currency"],
-			this.frm.doc.price_list_currency != company_currency);
-
-		// set labels
-		$.each(field_label_map, function(fname, label) {
-			me.frm.fields_dict[fname].set_label(label);
-		});
-	},
-
-	change_grid_labels: function(company_currency) {
-		var me = this;
-		var field_label_map = {};
-
-		var setup_field_label_map = function(fields_list, currency, parentfield) {
-			var grid_doctype = me.frm.fields_dict[parentfield].grid.doctype;
-			$.each(fields_list, function(i, fname) {
-				var docfield = frappe.meta.docfield_map[grid_doctype][fname];
-				if(docfield) {
-					var label = __(docfield.label || "").replace(/\([^\)]*\)/g, "");
-					field_label_map[grid_doctype + "-" + fname] =
-						label.trim() + " (" + currency + ")";
-				}
-			});
-		}
-
-		setup_field_label_map(["base_rate", "base_price_list_rate", "base_amount"],
-			company_currency, "items");
-
-		setup_field_label_map(["rate", "price_list_rate", "amount"],
-			this.frm.doc.currency, "items");
-
-		setup_field_label_map(["tax_amount", "total"], company_currency, "taxes");
-
-		if(this.frm.fields_dict["advances"]) {
-			setup_field_label_map(["advance_amount", "allocated_amount"], company_currency,
-				"advances");
-		}
-
-		// toggle columns
-		var item_grid = this.frm.fields_dict["items"].grid;
-		var show = (this.frm.doc.currency != company_currency) ||
-			((cur_frm.doc.taxes || []).filter(
-					function(d) { return d.included_in_print_rate===1}).length);
-
-		$.each(["base_rate", "base_price_list_rate", "base_amount"], function(i, fname) {
-			if(frappe.meta.get_docfield(item_grid.doctype, fname))
-				item_grid.set_column_disp(fname, show);
-		});
-
-		// set labels
-		var $wrapper = $(this.frm.wrapper);
-		$.each(field_label_map, function(fname, label) {
-			fname = fname.split("-");
-			var df = frappe.meta.get_docfield(fname[0], fname[1], me.frm.doc.name);
-			if(df) df.label = label;
-		});
 	}
 });
 

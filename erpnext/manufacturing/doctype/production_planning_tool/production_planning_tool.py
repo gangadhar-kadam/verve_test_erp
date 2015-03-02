@@ -3,11 +3,12 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import cstr, flt, cint, nowdate, add_days, comma_and
+from frappe.utils import cstr, flt, cint, nowdate, now, add_days, comma_and
 
 from frappe import msgprint, _
 
 from frappe.model.document import Document
+from erpnext.manufacturing.doctype.bom.bom import validate_bom_no
 
 class ProductionPlanningTool(Document):
 	def __init__(self, arg1, arg2=None):
@@ -16,12 +17,12 @@ class ProductionPlanningTool(Document):
 
 	def get_so_details(self, so):
 		"""Pull other details from so"""
-		so = frappe.db.sql("""select transaction_date, customer, grand_total
+		so = frappe.db.sql("""select transaction_date, customer, base_grand_total
 			from `tabSales Order` where name = %s""", so, as_dict = 1)
 		ret = {
 			'sales_order_date': so and so[0]['transaction_date'] or '',
 			'customer' : so[0]['customer'] or '',
-			'grand_total': so[0]['grand_total']
+			'grand_total': so[0]['base_grand_total']
 		}
 		return ret
 
@@ -61,7 +62,7 @@ class ProductionPlanningTool(Document):
 			item_filter += ' and item.name = "' + self.fg_item + '"'
 
 		open_so = frappe.db.sql("""
-			select distinct so.name, so.transaction_date, so.customer, so.grand_total
+			select distinct so.name, so.transaction_date, so.customer, so.base_grand_total
 			from `tabSales Order` so, `tabSales Order Item` so_item
 			where so_item.parent = so.name
 				and so.docstatus = 1 and so.status != "Stopped"
@@ -90,7 +91,7 @@ class ProductionPlanningTool(Document):
 				pp_so.sales_order = r['name']
 				pp_so.sales_order_date = cstr(r['transaction_date'])
 				pp_so.customer = cstr(r['customer'])
-				pp_so.grand_total = flt(r['grand_total'])
+				pp_so.grand_total = flt(r['base_grand_total'])
 
 	def get_items_from_so(self):
 		""" Pull items from Sales Order, only proction item
@@ -156,19 +157,9 @@ class ProductionPlanningTool(Document):
 	def validate_data(self):
 		self.validate_company()
 		for d in self.get('items'):
-			self.validate_bom_no(d)
+			validate_bom_no(d.item_code, d.bom_no)
 			if not flt(d.planned_qty):
 				frappe.throw(_("Please enter Planned Qty for Item {0} at row {1}").format(d.item_code, d.idx))
-
-	def validate_bom_no(self, d):
-		if not d.bom_no:
-			frappe.throw(_("Please enter BOM for Item {0} at row {1}").format(d.item_code, d.idx))
-		else:
-			bom = frappe.db.sql("""select name from `tabBOM` where name = %s and item = %s
-				and docstatus = 1 and is_active = 1""",
-				(d.bom_no, d.item_code), as_dict = 1)
-			if not bom:
-				frappe.throw(_("Incorrect or Inactive BOM {0} for Item {1} at row {2}").format(d.bom_no, d.item_code, d.idx))
 
 	def raise_production_order(self):
 		"""It will raise production order (Draft) for all distinct FG items"""
@@ -218,6 +209,9 @@ class ProductionPlanningTool(Document):
 		for key in items:
 			pro = frappe.new_doc("Production Order")
 			pro.update(items[key])
+
+			pro.planned_start_date = now()
+			pro.set_production_order_operations()
 
 			frappe.flags.mute_messages = True
 			try:

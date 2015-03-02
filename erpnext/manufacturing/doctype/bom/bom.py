@@ -14,10 +14,9 @@ class BOM(Document):
 
 	def autoname(self):
 		last_name = frappe.db.sql("""select max(name) from `tabBOM`
-			where name like "BOM/%s/%%" """ % cstr(self.item).replace('"', '\\"'))
+			where name like "BOM/%s/%%" """ % frappe.db.escape(self.item))
 		if last_name:
 			idx = cint(cstr(last_name[0][0]).split('/')[-1].split('-')[0]) + 1
-
 		else:
 			idx = 1
 		self.name = 'BOM/' + self.item + ('/%.3i' % idx)
@@ -55,7 +54,7 @@ class BOM(Document):
 
 	def get_item_det(self, item_code):
 		item = frappe.db.sql("""select name, item_name, is_asset_item, is_purchase_item,
-			docstatus, description, is_sub_contracted_item, stock_uom, default_bom,
+			docstatus, description, image, is_sub_contracted_item, stock_uom, default_bom,
 			last_purchase_rate
 			from `tabItem` where name=%s""", item_code, as_dict = 1)
 
@@ -96,6 +95,7 @@ class BOM(Document):
 		ret_item = {
 			 'item_name'	: item and args['item_name'] or '',
 			 'description'  : item and args['description'] or '',
+			 'image'		: item and args['image'] or '',
 			 'stock_uom'	: item and args['stock_uom'] or '',
 			 'bom_no'		: args['bom_no'],
 			 'rate'			: rate
@@ -298,12 +298,13 @@ class BOM(Document):
 				self.get_child_exploded_items(d.bom_no, d.qty)
 			else:
 				self.add_to_cur_exploded_items(frappe._dict({
-					'item_code'				: d.item_code,
-					'item_name'				: d.item_name,
-					'description'			: d.description,
-					'stock_uom'				: d.stock_uom,
-					'qty'					: flt(d.qty),
-					'rate'					: flt(d.rate),
+					'item_code'		: d.item_code,
+					'item_name'		: d.item_name,
+					'description'	: d.description,
+					'image'			: d.image,
+					'stock_uom'		: d.stock_uom,
+					'qty'			: flt(d.qty),
+					'rate'			: flt(d.rate),
 				}))
 
 	def add_to_cur_exploded_items(self, args):
@@ -367,35 +368,29 @@ def get_bom_items_as_dict(bom, qty=1, fetch_exploded=1):
 				item.item_name,
 				sum(ifnull(bom_item.qty, 0)/ifnull(bom.quantity, 1)) * %(qty)s as qty,
 				item.description,
+				item.image,
 				item.stock_uom,
 				item.default_warehouse,
 				item.expense_account as expense_account,
 				item.buying_cost_center as cost_center
 			from
-				`tab%(table)s` bom_item, `tabBOM` bom, `tabItem` item
+				`tab{table}` bom_item, `tabBOM` bom, `tabItem` item
 			where
 				bom_item.parent = bom.name
 				and bom_item.docstatus < 2
-				and bom_item.parent = "%(bom)s"
+				and bom_item.parent = %(bom)s
 				and item.name = bom_item.item_code
-				%(conditions)s
+				{conditions}
 				group by item_code, stock_uom"""
 
 	if fetch_exploded:
-		items = frappe.db.sql(query % {
-			"qty": qty,
-			"table": "BOM Explosion Item",
-			"bom": bom,
-			"conditions": """and ifnull(item.is_pro_applicable, 'No') = 'No'
-					and ifnull(item.is_sub_contracted_item, 'No') = 'No' """
-		}, as_dict=True)
+		query = query.format(table="BOM Explosion Item",
+			conditions="""and ifnull(item.is_pro_applicable, 'No') = 'No'
+				and ifnull(item.is_sub_contracted_item, 'No') = 'No' """)
+		items = frappe.db.sql(query, { "qty": qty,	"bom": bom }, as_dict=True)
 	else:
-		items = frappe.db.sql(query % {
-			"qty": qty,
-			"table": "BOM Item",
-			"bom": bom,
-			"conditions": ""
-		}, as_dict=True)
+		query = query.format(table="BOM Item", conditions="")
+		items = frappe.db.sql(query, { "qty": qty, "bom": bom }, as_dict=True)
 
 	# make unique
 	for item in items:

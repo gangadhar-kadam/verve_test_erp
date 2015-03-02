@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from frappe import _
 
 def get_data():
@@ -277,18 +278,6 @@ def get_data():
 					"name": "Sales Partners Commission",
 					"is_query_report": True,
 					"doctype": "Sales Invoice"
-				},
-				{
-					"type": "report",
-					"name": "Customer Account Head",
-					"is_query_report": True,
-					"doctype": "Account"
-				},
-				{
-					"type": "report",
-					"name": "Supplier Account Head",
-					"is_query_report": True,
-					"doctype": "Account"
 				},
 				{
 					"type": "report",

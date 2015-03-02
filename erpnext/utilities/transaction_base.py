@@ -48,10 +48,10 @@ class TransactionBase(StatusUpdater):
 				"ref_name": self.name
 			})
 
-			if frappe.db.exists("User", self.contact_by):
-				frappe.share("Event", event.name, self.contact_by)
-
 			event.insert(ignore_permissions=True)
+
+			if frappe.db.exists("User", self.contact_by):
+				frappe.share.add("Event", event.name, self.contact_by)
 
 	def validate_uom_is_integer(self, uom_field, qty_fields):
 		validate_uom_is_integer(self, uom_field, qty_fields)
@@ -86,6 +86,7 @@ class TransactionBase(StatusUpdater):
 				for field, condition in fields:
 					if prevdoc_values[field] is not None:
 						self.validate_value(field, condition, prevdoc_values[field], doc)
+
 
 def delete_events(ref_type, ref_name):
 	frappe.delete_doc("Event", frappe.db.sql_list("""select name from `tabEvent`

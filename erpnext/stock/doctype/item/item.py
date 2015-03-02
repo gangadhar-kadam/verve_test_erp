@@ -16,10 +16,12 @@ class DuplicateVariant(frappe.ValidationError): pass
 class ItemTemplateCannotHaveStock(frappe.ValidationError): pass
 
 class Item(WebsiteGenerator):
-	page_title_field = "item_name"
-	condition_field = "show_in_website"
-	template = "templates/generators/item.html"
-	parent_website_route_field = "item_group"
+	website = frappe._dict(
+		page_title_field = "item_name",
+		condition_field = "show_in_website",
+		template = "templates/generators/item.html",
+		parent_website_route_field = "item_group",
+	)
 
 	def onload(self):
 		super(Item, self).onload()
@@ -33,6 +35,10 @@ class Item(WebsiteGenerator):
 			msgprint(_("Item Code is mandatory because Item is not automatically numbered"), raise_exception=1)
 
 		self.name = self.item_code
+
+	def before_insert(self):
+		if self.is_sales_item=="Yes":
+			self.publish_in_hub = 1
 
 	def validate(self):
 		super(Item, self).validate()
@@ -58,6 +64,7 @@ class Item(WebsiteGenerator):
 		self.validate_warehouse_for_reorder()
 		self.validate_variants()
 		self.update_item_desc()
+		self.synced_with_hub = 0
 
 		if not self.get("__islocal"):
 			self.old_item_group = frappe.db.get_value(self.doctype, self.name, "item_group")
@@ -76,6 +83,8 @@ class Item(WebsiteGenerator):
 			[{"name": self.name}]
 		if self.slideshow:
 			context.update(get_slideshow(self))
+
+		context["parents"] = self.get_parents(context)
 
 		return context
 
@@ -155,7 +164,7 @@ class Item(WebsiteGenerator):
 
 		# delete missing variants
 		existing_variants = [d.name for d in frappe.get_all("Item",
-			{"variant_of":self.name})]
+			filters={"variant_of":self.name})]
 
 		updated, deleted = [], []
 		for existing_variant in existing_variants:
@@ -182,6 +191,7 @@ class Item(WebsiteGenerator):
 			frappe.msgprint(_("Item Variants {0} deleted").format(", ".join(deleted)))
 
 	def get_variant_item_codes(self):
+		"""Get all possible suffixes for variants"""
 		if not self.variants:
 			return []
 
@@ -229,7 +239,7 @@ class Item(WebsiteGenerator):
 		from frappe.model import no_value_fields
 		for field in self.meta.fields:
 			if field.fieldtype not in no_value_fields and (insert or not field.no_copy)\
-				and field.fieldname != "item_code":
+				and field.fieldname not in ("item_code", "item_name"):
 				if variant.get(field.fieldname) != template.get(field.fieldname):
 					variant.set(field.fieldname, template.get(field.fieldname))
 					variant.__dirty = True
@@ -240,9 +250,10 @@ class Item(WebsiteGenerator):
 			template.get_variant_item_codes()
 
 		for attr in template.variant_attributes[variant.item_code]:
-			variant.description += "\n" + attr[0] + ": " + attr[1]
-			if variant.description_html:
-				variant.description_html += "<div style='margin-top: 4px; font-size: 80%'>" + attr[0] + ": " + attr[1] + "</div>"
+			variant.description += "<p>" + attr[0] + ": " + attr[1] + "</p>"
+
+		variant.item_name = self.item_name + variant.item_code[len(self.name):]
+
 		variant.variant_of = template.name
 		variant.has_variants = 0
 		variant.show_in_website = 0
@@ -289,7 +300,7 @@ class Item(WebsiteGenerator):
 		if self.default_bom:
 			bom_item = frappe.db.get_value("BOM", self.default_bom, "item")
 			if bom_item not in (self.name, self.variant_of):
-				frappe.throw(_("Default BOM must be for this item or its template"))
+				frappe.throw(_("Default BOM ({0}) must be active for this item or its template").format(bom_item))
 
 		if self.is_purchase_item != "Yes":
 			bom_mat = frappe.db.sql("""select distinct t1.parent
@@ -382,7 +393,7 @@ class Item(WebsiteGenerator):
 		super(Item, self).on_trash()
 		frappe.db.sql("""delete from tabBin where item_code=%s""", self.item_code)
 		frappe.db.sql("delete from `tabItem Price` where item_code=%s", self.name)
-		for variant_of in frappe.get_all("Item", {"variant_of": self.name}):
+		for variant_of in frappe.get_all("Item", filters={"variant_of": self.name}):
 			frappe.delete_doc("Item", variant_of.name)
 
 	def before_rename(self, olddn, newdn, merge=False):
@@ -434,13 +445,13 @@ class Item(WebsiteGenerator):
 					row = self.append("website_specifications")
 					row.label = label
 					row.description = desc
-					
+
 	def update_item_desc(self):
 		if frappe.db.get_value('BOM',self.name, 'description') != self.description:
 			frappe.db.sql("""update `tabBOM` set description = %s where item = %s and docstatus < 2""",(self.description, self.name))
 			frappe.db.sql("""update `tabBOM Item` set description = %s where item_code = %s and docstatus < 2""",(self.description, self.name))
-			frappe.db.sql("""update `tabBOM Explosion Item` set description = %s where item_code = %s and docstatus < 2""",(self.description, self.name))		
-		
+			frappe.db.sql("""update `tabBOM Explosion Item` set description = %s where item_code = %s and docstatus < 2""",(self.description, self.name))
+
 def validate_end_of_life(item_code, end_of_life=None, verbose=1):
 	if not end_of_life:
 		end_of_life = frappe.db.get_value("Item", item_code, "end_of_life")
