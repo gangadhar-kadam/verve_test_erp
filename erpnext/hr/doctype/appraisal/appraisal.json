@@ -136,6 +136,16 @@
    "read_only": 1
   }, 
   {
+   "fieldname": "total_by_hr", 
+   "fieldtype": "Float", 
+   "in_list_view": 1, 
+   "label": "Total Score By HR(Out of 5)", 
+   "no_copy": 1, 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 1
+  }, 
+  {
    "depends_on": "kra_template", 
    "fieldname": "section_break1", 
    "fieldtype": "Section Break", 
@@ -197,7 +207,7 @@
  "icon": "icon-thumbs-up", 
  "idx": 1, 
  "is_submittable": 1, 
- "modified": "2015-02-20 05:08:10.903126", 
+ "modified": "2015-03-11 10:33:15.772331", 
  "modified_by": "Administrator", 
  "module": "HR", 
  "name": "Appraisal", 
@@ -248,6 +258,24 @@
    "share": 1, 
    "submit": 1, 
    "write": 1
+  }, 
+  {
+   "amend": 0, 
+   "cancel": 0, 
+   "create": 0, 
+   "delete": 0, 
+   "permlevel": 1, 
+   "read": 1, 
+   "report": 1, 
+   "role": "HR User", 
+   "submit": 0, 
+   "write": 1
+  }, 
+  {
+   "apply_user_permissions": 1, 
+   "permlevel": 1, 
+   "read": 1, 
+   "role": "Employee"
   }
  ], 
  "search_fields": "status, employee, employee_name", 
