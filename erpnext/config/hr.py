@@ -19,11 +19,6 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "Expense Claim",
-					"description": _("Claims for company expense."),
-				},
-				{
-					"type": "doctype",
 					"name": "Attendance",
 					"description": _("Attendance record."),
 				},
@@ -39,14 +34,40 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "Job Applicant",
-					"description": _("Applicant for a Job."),
+					"name": "Requisition For Expense",
+					"description": _("Claims for company expense."),
 				},
 				{
 					"type": "doctype",
-					"name": "Job Opening",
-					"description": _("Opening for a Job."),
+					"name": "Expense Claim",
+					"description": _("Claims for company expense."),
 				},
+				{
+					"type": "doctype",
+					"name": "Internal Communication",
+					"description": _("Internal Communication."),
+				},
+				{
+					"type":"doctype",
+					"name": "Daily Reporting",
+					"description": _("Daily Reporting Records")
+				},
+				{
+					"type":"doctype",
+					"name": "Task",
+					"label": _("Daily Schedules and Task"),
+					"description": _("Task Database")
+				},
+				# {
+				# 	"type": "doctype",
+				# 	"name": "Job Applicant",
+				# 	"description": _("Applicant for a Job."),
+				# },
+				# {
+				# 	"type": "doctype",
+				# 	"name": "Job Opening",
+				# 	"description": _("Opening for a Job."),
+				# },
 			]
 		},
 		{
@@ -84,11 +105,11 @@ def get_data():
 					"name": "HR Settings",
 					"description": _("Settings for HR Module")
 				},
-				{
-					"type": "doctype",
-					"name": "Employee",
-					"description": _("Employee master.")
-				},
+				# {
+				# 	"type": "doctype",
+				# 	"name": "Employee",
+				# 	"description": _("Employee master.")
+				# },
 				{
 					"type": "doctype",
 					"name": "Employment Type",

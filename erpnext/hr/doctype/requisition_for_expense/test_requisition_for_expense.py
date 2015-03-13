@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import frappe
 import unittest
 
-# test_records = frappe.get_test_records('Appraisal Template')
+# test_records = frappe.get_test_records('Requisition For Expense')
 
-class TestAppraisalTemplate(unittest.TestCase):
+class TestRequisitionForExpense(unittest.TestCase):
 	pass

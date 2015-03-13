@@ -40,7 +40,7 @@
  ], 
  "icon": "icon-file-text", 
  "idx": 1, 
- "modified": "2015-03-02 06:32:50.109677", 
+ "modified": "2015-03-11 10:46:28.846779", 
  "modified_by": "Administrator", 
  "module": "HR", 
  "name": "Appraisal Template", 
@@ -57,6 +57,14 @@
    "role": "HR User", 
    "share": 1, 
    "write": 1
+  }, 
+  {
+   "apply_user_permissions": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Employee", 
+   "write": 0
   }
  ]
 }

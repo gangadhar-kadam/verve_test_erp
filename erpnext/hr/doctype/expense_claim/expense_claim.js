@@ -3,6 +3,8 @@
 
 frappe.provide("erpnext.hr");
 
+cur_frm.add_fetch("requisition", "sanctioned_amount", "sanctioned_requisition_amount");
+
 erpnext.hr.ExpenseClaimController = frappe.ui.form.Controller.extend({
 	make_bank_entry: function() {
 		var me = this;
