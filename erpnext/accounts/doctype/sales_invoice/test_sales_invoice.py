@@ -3,8 +3,7 @@
 from __future__ import unicode_literals
 
 import frappe
-import unittest, json, copy
-from frappe.utils import flt
+import unittest, copy
 from erpnext.accounts.utils import get_stock_and_account_difference
 from erpnext.stock.doctype.purchase_receipt.test_purchase_receipt import set_perpetual_inventory
 from erpnext.projects.doctype.time_log_batch.test_time_log_batch import *
@@ -88,7 +87,6 @@ class TestSalesInvoice(unittest.TestCase):
 
 		# change shipping to $2
 		si.get("taxes")[0].tax_amount = 2
-
 		si.insert()
 
 		expected_values = {
@@ -99,8 +97,7 @@ class TestSalesInvoice(unittest.TestCase):
 		}
 
 		# check if children are saved
-		self.assertEquals(len(si.get("items")),
-			len(expected_values)-1)
+		self.assertEquals(len(si.get("items")), len(expected_values)-1)
 
 		# check if item values are calculated
 		for d in si.get("items"):
@@ -108,8 +105,10 @@ class TestSalesInvoice(unittest.TestCase):
 				self.assertEquals(d.get(k), expected_values[d.item_code][i])
 
 		# check net total
-		self.assertEquals(si.base_net_total, 1250)
+		self.assertEquals(si.total, 25)
+		self.assertEquals(si.base_total, 1250)
 		self.assertEquals(si.net_total, 25)
+		self.assertEquals(si.base_net_total, 1250)
 
 		# check tax calculation
 		expected_values = {
@@ -387,7 +386,6 @@ class TestSalesInvoice(unittest.TestCase):
 		self.assertEquals(w.outstanding_amount, w.base_grand_total)
 
 	def test_payment(self):
-		frappe.db.sql("""delete from `tabGL Entry`""")
 		w = self.make()
 
 		from erpnext.accounts.doctype.journal_entry.test_journal_entry \
@@ -398,12 +396,10 @@ class TestSalesInvoice(unittest.TestCase):
 		jv.insert()
 		jv.submit()
 
-		self.assertEquals(frappe.db.get_value("Sales Invoice", w.name, "outstanding_amount"),
-			161.8)
+		self.assertEquals(frappe.db.get_value("Sales Invoice", w.name, "outstanding_amount"), 161.8)
 
 		jv.cancel()
-		self.assertEquals(frappe.db.get_value("Sales Invoice", w.name, "outstanding_amount"),
-			561.8)
+		self.assertEquals(frappe.db.get_value("Sales Invoice", w.name, "outstanding_amount"), 561.8)
 
 	def test_time_log_batch(self):
 		delete_time_log_and_batch()
@@ -432,7 +428,6 @@ class TestSalesInvoice(unittest.TestCase):
 		delete_time_log_and_batch()
 
 	def test_sales_invoice_gl_entry_without_aii(self):
-		self.clear_stock_account_balance()
 		set_perpetual_inventory(0)
 		si = frappe.copy_doc(test_records[1])
 		si.insert()
@@ -465,7 +460,6 @@ class TestSalesInvoice(unittest.TestCase):
 		self.assertFalse(gle)
 
 	def test_pos_gl_entry_with_aii(self):
-		self.clear_stock_account_balance()
 		set_perpetual_inventory()
 		self.make_pos_setting()
 
@@ -503,8 +497,8 @@ class TestSalesInvoice(unittest.TestCase):
 			[pos["items"][0]["income_account"], 0.0, 500.0],
 			[pos["taxes"][0]["account_head"], 0.0, 80.0],
 			[pos["taxes"][1]["account_head"], 0.0, 50.0],
-			[stock_in_hand, 0.0, 75.0],
-			[pos["items"][0]["expense_account"], 75.0, 0.0],
+			[stock_in_hand, 0.0, abs(sle.stock_value_difference)],
+			[pos["items"][0]["expense_account"], abs(sle.stock_value_difference), 0.0],
 			[si.debit_to, 0.0, 600.0],
 			["_Test Account Bank Account - _TC", 600.0, 0.0]
 		])
@@ -547,7 +541,6 @@ class TestSalesInvoice(unittest.TestCase):
 			pos_setting.insert()
 
 	def test_si_gl_entry_with_aii_and_update_stock_with_warehouse_but_no_account(self):
-		self.clear_stock_account_balance()
 		set_perpetual_inventory()
 		frappe.delete_doc("Account", "_Test Warehouse No Account - _TC")
 
@@ -602,7 +595,6 @@ class TestSalesInvoice(unittest.TestCase):
 		set_perpetual_inventory(0)
 
 	def test_sales_invoice_gl_entry_with_aii_no_item_code(self):
-		self.clear_stock_account_balance()
 		set_perpetual_inventory()
 
 		si = frappe.get_doc(test_records[1])
@@ -629,7 +621,6 @@ class TestSalesInvoice(unittest.TestCase):
 		set_perpetual_inventory(0)
 
 	def test_sales_invoice_gl_entry_with_aii_non_stock_item(self):
-		self.clear_stock_account_balance()
 		set_perpetual_inventory()
 		si = frappe.get_doc(test_records[1])
 		si.get("items")[0].item_code = "_Test Non Stock Item"
@@ -707,13 +698,7 @@ class TestSalesInvoice(unittest.TestCase):
 
 	def test_recurring_invoice(self):
 		from erpnext.controllers.tests.test_recurring_document import test_recurring_document
-
 		test_recurring_document(self, test_records)
-
-	def clear_stock_account_balance(self):
-		frappe.db.sql("delete from `tabStock Ledger Entry`")
-		frappe.db.sql("delete from tabBin")
-		frappe.db.sql("delete from `tabGL Entry`")
 
 	def test_serialized(self):
 		from erpnext.stock.doctype.stock_entry.test_stock_entry import make_serialized_item
@@ -768,6 +753,36 @@ class TestSalesInvoice(unittest.TestCase):
 		si.insert()
 
 		self.assertRaises(SerialNoStatusError, si.submit)
+		
+def create_sales_invoice(**args):
+	si = frappe.new_doc("Sales Invoice")
+	args = frappe._dict(args)
+	if args.posting_date:
+		si.posting_date = args.posting_date
+	if args.posting_time:
+		si.posting_time = args.posting_time
+	
+	si.company = args.company or "_Test Company"
+	si.customer = args.customer or "_Test Customer"
+	si.debit_to = args.debit_to or "Debtors - _TC"
+	si.update_stock = args.update_stock
+	si.is_pos = args.is_pos
+	
+	si.append("items", {
+		"item_code": args.item or args.item_code or "_Test Item",
+		"warehouse": args.warehouse or "_Test Warehouse - _TC",
+		"qty": args.qty or 1,
+		"rate": args.rate or 100,
+		"expense_account": "Cost of Goods Sold - _TC",
+		"cost_center": "_Test Cost Center - _TC",
+		"serial_no": args.serial_no
+	})
+	
+	if not args.do_not_save:
+		si.insert()
+		if not args.do_not_submit:
+			si.submit()
+	return si
 
 test_dependencies = ["Journal Entry", "Contact", "Address"]
 test_records = frappe.get_test_records('Sales Invoice')
