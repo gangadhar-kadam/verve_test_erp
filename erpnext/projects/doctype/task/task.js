@@ -58,6 +58,29 @@ erpnext.projects.Task = frappe.ui.form.Controller.extend({
 			this.frm.doc.project);
 	},
 
+    exp_start_date: function(doc) {
+        if(doc.exp_start_date) {
+            var  today = new Date ();
+            var d = ('0' + today.getDate()).slice(-2);
+            var a = ('0' + (today.getMonth() + 1)).slice(-2);
+            var b = today.getFullYear();
+            var date = b +'-'+ a + '-' + d ;
+            if(doc.exp_start_date < date){
+                msgprint("Expected Start Date should be todays or greater than todays date.");
+                throw "Check Start Date"
+            }
+        }
+    },
+
+    exp_end_date: function(doc) {
+        if(doc.exp_start_date) {
+            if(doc.exp_start_date > doc.exp_end_date){
+                msgprint("End Date should be greater than start date.");
+                throw "Check  Date";
+            }       
+        }
+    },
+
     onload : function(){
         if (in_list(user_roles, "Cell Leader")){
             set_field_permlevel('cell',1);
