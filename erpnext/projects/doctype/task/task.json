@@ -70,7 +70,7 @@
    "fieldtype": "Link", 
    "in_list_view": 1, 
    "label": "Church Group", 
-   "options": "Church Group Master", 
+   "options": "Group Church Master", 
    "permlevel": 0, 
    "precision": ""
   }, 
@@ -281,7 +281,7 @@
  "icon": "icon-check", 
  "idx": 1, 
  "max_attachments": 5, 
- "modified": "2015-03-07 18:51:35.017018", 
+ "modified": "2015-03-16 14:30:24.491131", 
  "modified_by": "Administrator", 
  "module": "Projects", 
  "name": "Task", 
