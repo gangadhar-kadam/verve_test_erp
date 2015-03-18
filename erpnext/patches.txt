@@ -118,7 +118,7 @@ erpnext.patches.v5_0.rename_customer_issue
 erpnext.patches.v5_0.update_material_transfer_for_manufacture
 erpnext.patches.v5_0.manufacturing_activity_type
 erpnext.patches.v5_0.update_item_description_and_image
-erpnext.patches.v5_0.update_material_transferred_for_qty
+erpnext.patches.v5_0.update_material_transferred_for_manufacturing
 erpnext.patches.v5_0.stock_entry_update_value
 erpnext.patches.v5_0.convert_stock_reconciliation
 erpnext.patches.v5_0.update_projects
@@ -131,3 +131,5 @@ erpnext.patches.v5_0.update_account_types
 erpnext.patches.v5_0.update_sms_sender
 erpnext.patches.v5_0.set_appraisal_remarks
 erpnext.patches.v5_0.update_time_log_title
+erpnext.patches.v4_2.repost_reserved_qty
+erpnext.patches.v4_2.repost_sle_for_si_with_no_warehouse
