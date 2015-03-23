@@ -18,7 +18,7 @@ def get_data():
 			"color": "#2ecc71",
 			"icon": "icon-group",
 			"icon": "octicon octicon-organization",
-			"label": _("Church Administration"),
+			"label": _("Church Office"),
 			"type": "module"
 		},
 		"Manufacturing": {
