@@ -34,9 +34,9 @@ cur_frm.add_fetch("church_group", "zone", "zone");
 cur_frm.add_fetch("zone", "region", "region");
 
 erpnext.projects.Task = frappe.ui.form.Controller.extend({
-    refresh : function(doc, dt,dn){
-        get_server_fields('set_higher_values','','',doc, dt, dn, 1);
-    },
+    // refresh : function(doc, dt,dn){
+    //     get_server_fields('set_higher_values','','',doc, dt, dn, 1);
+    // },
 
 	setup: function() {
 		this.frm.fields_dict.project.get_query = function() {
@@ -76,7 +76,7 @@ erpnext.projects.Task = frappe.ui.form.Controller.extend({
         if(doc.exp_start_date) {
             if(doc.exp_start_date > doc.exp_end_date){
                 msgprint("End Date should be greater than start date.");
-                throw "Check  Date";
+                throw "Check Date";
             }       
         }
     },
