@@ -11,51 +11,9 @@ from frappe import _
 from frappe.model.document import Document
 
 class Task(Document):
-	def get_feed(self):
-		return '{0}: {1}'.format(_(self.status), self.subject)
 
-	def get_project_details(self):
-		return {
-			"project": self.project
-		}
-
-	def get_customer_details(self):
-		cust = frappe.db.sql("select customer_name from `tabCustomer` where name=%s", self.customer)
-		if cust:
-			ret = {'customer_name': cust and cust[0][0] or ''}
-			return ret
-
-	def validate(self):
-		if self.exp_start_date and self.exp_end_date and getdate(self.exp_start_date) > getdate(self.exp_end_date):
-			frappe.throw(_("'Expected Start Date' can not be greater than 'Expected End Date'"))
-
-		if self.act_start_date and self.act_end_date and getdate(self.act_start_date) > getdate(self.act_end_date):
-			frappe.throw(_("'Actual Start Date' can not be greater than 'Actual End Date'"))
-
-		self.update_status()
-
-	def update_status(self):
-		status = frappe.db.get_value("Task", self.name, "status")
-		if self.status=="Working" and status !="Working" and not self.act_start_date:
-			self.act_start_date = today()
-
-		if self.status=="Closed" and status != "Closed" and not self.act_end_date:
-			self.act_end_date = today()
-
-		if self.status=="Closed" and status != "Closed" :
-			#receiver_list=frappe.db.sql("")
-			from erpnext.setup.doctype.sms_settings.sms_settings import send_sms
-			receiver_list=[]
-			receiver_list.append("9960066444")
-			send_sms(receiver_list, "Hi the task is closed")
-
-	def on_update(self):
-		"""update percent complete in project"""
-		if self.project and not self.flags.from_project:
-			project = frappe.get_doc("Project", self.project)
-			project.run_method("update_percent_complete")
-
-	# def set_higher_values(self):
+	# def onload(self):
+	#     frappe.errprint("hi in onload")
 	# 	if self.region:
 	# 		value = frappe.db.sql("select zone,church_group,church,pcf,senior_cell,name from `tabCell Master` where region='%s'"%(self.region),as_list=1)
 	# 		ret={}
@@ -146,7 +104,53 @@ class Task(Document):
 	# 				"pcf" : value[0][4],
 	# 				"senior_cell" : value[0][5]
 	# 			}
-	# 		return ret
+
+
+	def get_feed(self):
+		return '{0}: {1}'.format(_(self.status), self.subject)
+
+	def get_project_details(self):
+		return {
+			"project": self.project
+		}
+
+	def get_customer_details(self):
+		cust = frappe.db.sql("select customer_name from `tabCustomer` where name=%s", self.customer)
+		if cust:
+			ret = {'customer_name': cust and cust[0][0] or ''}
+			return ret
+
+	def validate(self):
+		if self.exp_start_date and self.exp_end_date and getdate(self.exp_start_date) > getdate(self.exp_end_date):
+			frappe.throw(_("'Expected Start Date' can not be greater than 'Expected End Date'"))
+
+		if self.act_start_date and self.act_end_date and getdate(self.act_start_date) > getdate(self.act_end_date):
+			frappe.throw(_("'Actual Start Date' can not be greater than 'Actual End Date'"))
+
+		self.update_status()
+
+	def update_status(self):
+		status = frappe.db.get_value("Task", self.name, "status")
+		if self.status=="Working" and status !="Working" and not self.act_start_date:
+			self.act_start_date = today()
+
+		if self.status=="Closed" and status != "Closed" and not self.act_end_date:
+			self.act_end_date = today()
+
+		if self.status=="Closed" and status != "Closed" :
+			#receiver_list=frappe.db.sql("")
+			from erpnext.setup.doctype.sms_settings.sms_settings import send_sms
+			receiver_list=[]
+			receiver_list.append("9960066444")
+			send_sms(receiver_list, "Hi the task is closed")
+
+	def on_update(self):
+		"""update percent complete in project"""
+		if self.project and not self.flags.from_project:
+			project = frappe.get_doc("Project", self.project)
+			project.run_method("update_percent_complete")
+
+	
 
 @frappe.whitelist()
 def get_events(start, end, filters=None):
