@@ -281,7 +281,7 @@
  "icon": "icon-check", 
  "idx": 1, 
  "max_attachments": 5, 
- "modified": "2015-03-27 15:18:24.821777", 
+ "modified": "2015-04-01 16:31:11.543196", 
  "modified_by": "Administrator", 
  "module": "Projects", 
  "name": "Task", 
@@ -444,6 +444,7 @@
    "apply_user_permissions": 1, 
    "permlevel": 1, 
    "read": 1, 
+   "report": 1, 
    "role": "Cell Leader"
   }
  ], 
