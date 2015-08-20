@@ -33,6 +33,12 @@ def get_data():
 					"description": _("Performance appraisal."),
 				},
 				{
+					"type":"doctype",
+					"name": "Self Appraisal Form",
+					"label": _("Self Appraisal Form"),
+					"description": _("Self Appraisal Form")
+				},
+				{
 					"type": "doctype",
 					"name": "Requisition For Expense",
 					"description": _("Claims for company expense."),
@@ -58,6 +64,13 @@ def get_data():
 					"label": _("Daily Schedules and Task"),
 					"description": _("Task Database")
 				},
+				{
+					"type":"doctype",
+					"name": "Employee Daily Report",
+					"label": _("Employee Daily Report"),
+					"description": _("Employee Daily Report Database")
+				},
+
 				# {
 				# 	"type": "doctype",
 				# 	"name": "Job Applicant",

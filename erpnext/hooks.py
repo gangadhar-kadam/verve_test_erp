@@ -84,7 +84,9 @@ scheduler_events = {
 		"erpnext.setup.doctype.backup_manager.backup_manager.take_backups_daily"
 	],
 	"weekly_long": [
-		"erpnext.setup.doctype.backup_manager.backup_manager.take_backups_weekly"
+		"erpnext.setup.doctype.backup_manager.backup_manager.take_backups_weekly",
+		"church_ministry.church_ministry.doctype.member.member.send_notification_member_absent",
+		"church_ministry.church_ministry.doctype.member.member.send_notification_cell_meeting_not_hold"
 	]
 }
 
