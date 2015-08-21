@@ -1,6 +1,6 @@
 {
  "autoname": "SMSLOG/.########", 
- "creation": "2012-03-27 14:36:47.000000", 
+ "creation": "2012-03-27 14:36:47", 
  "docstatus": 0, 
  "doctype": "DocType", 
  "fields": [
@@ -55,7 +55,7 @@
  ], 
  "icon": "icon-mobile-phone", 
  "idx": 1, 
- "modified": "2013-12-20 19:24:35.000000", 
+ "modified": "2015-08-21 12:32:47.719499", 
  "modified_by": "Administrator", 
  "module": "Utilities", 
  "name": "SMS Log", 
@@ -70,6 +70,62 @@
    "report": 1, 
    "role": "System Manager", 
    "write": 0
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Regional Pastor", 
+   "write": 1
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Zonal Pastor", 
+   "write": 1
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Group Church Pastor", 
+   "write": 1
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Church Pastor", 
+   "write": 1
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "PCF Leader", 
+   "write": 1
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Senior Cell Leader", 
+   "write": 1
+  }, 
+  {
+   "create": 1, 
+   "permlevel": 0, 
+   "read": 1, 
+   "report": 1, 
+   "role": "Cell Leader", 
+   "write": 1
   }
  ]
 }
