@@ -1,13 +1,13 @@
 cur_frm.add_fetch("employee_id", "employee_name", "employee_name");
 frappe.ui.form.on("Self Appraisal Form", "employee_id", function(frm,dt,dn) {
         frappe.call({
-        method:"church_ministry.church_ministry.doctype.member.member.get_attendance_points",
+        method:"church_ministry.church_ministry.doctype.member.member.send_notification_member_absent",
         args:{"args":frm.doc.employee_id  },
         callback: function(r) {
-          if (r.message){
+          /*if (r.message){
             frm.doc.data_7=r.message
             refresh_field('data_7');          
-          }
+          }*/
         }
       });
 });
