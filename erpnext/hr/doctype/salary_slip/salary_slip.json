@@ -337,7 +337,7 @@
  "icon": "icon-file-text", 
  "idx": 1, 
  "is_submittable": 1, 
- "modified": "2015-02-20 05:12:10.770423", 
+ "modified": "2015-09-15 12:23:11.656534", 
  "modified_by": "Administrator", 
  "module": "HR", 
  "name": "Salary Slip", 
@@ -361,6 +361,7 @@
   }, 
   {
    "amend": 1, 
+   "apply_user_permissions": 1, 
    "cancel": 1, 
    "create": 1, 
    "delete": 1, 
@@ -370,6 +371,7 @@
    "read": 1, 
    "report": 1, 
    "role": "HR Manager", 
+   "set_user_permissions": 1, 
    "share": 1, 
    "submit": 1, 
    "write": 1
@@ -378,7 +380,8 @@
    "apply_user_permissions": 1, 
    "permlevel": 0, 
    "read": 1, 
-   "role": "Employee"
+   "role": "Employee", 
+   "set_user_permissions": 0
   }
  ], 
  "sort_field": "modified", 

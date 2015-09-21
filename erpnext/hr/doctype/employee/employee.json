@@ -145,6 +145,16 @@
    "reqd": 1
   }, 
   {
+   "fieldname": "office", 
+   "fieldtype": "Link", 
+   "in_list_view": 1, 
+   "label": "Office", 
+   "options": "Offices", 
+   "permlevel": 0, 
+   "precision": "", 
+   "reqd": 1
+  }, 
+  {
    "fieldname": "employment_details", 
    "fieldtype": "Section Break", 
    "label": "Employment Details", 
@@ -273,7 +283,7 @@
    "fieldname": "designation", 
    "fieldtype": "Link", 
    "in_filter": 1, 
-   "in_list_view": 1, 
+   "in_list_view": 0, 
    "label": "Designation", 
    "oldfieldname": "designation", 
    "oldfieldtype": "Link", 
@@ -674,7 +684,7 @@
  ], 
  "icon": "icon-user", 
  "idx": 1, 
- "modified": "2015-02-20 05:02:14.205144", 
+ "modified": "2015-09-16 13:05:16.795620", 
  "modified_by": "Administrator", 
  "module": "HR", 
  "name": "Employee", 
@@ -691,6 +701,7 @@
    "read": 1, 
    "report": 1, 
    "role": "Employee", 
+   "set_user_permissions": 1, 
    "submit": 0, 
    "write": 0
   }, 
@@ -712,6 +723,7 @@
   }, 
   {
    "amend": 0, 
+   "apply_user_permissions": 1, 
    "create": 1, 
    "delete": 1, 
    "email": 1, 
