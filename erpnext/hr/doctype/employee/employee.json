@@ -684,7 +684,7 @@
  ], 
  "icon": "icon-user", 
  "idx": 1, 
- "modified": "2015-09-16 13:05:16.795620", 
+ "modified": "2015-09-23 19:17:28.554767", 
  "modified_by": "Administrator", 
  "module": "HR", 
  "name": "Employee", 
@@ -716,9 +716,9 @@
    "read": 1, 
    "report": 1, 
    "role": "HR User", 
+   "set_user_permissions": 1, 
    "share": 1, 
    "submit": 0, 
-   "user_permission_doctypes": "[\"Branch\",\"Company\",\"Department\",\"Designation\"]", 
    "write": 1
   }, 
   {

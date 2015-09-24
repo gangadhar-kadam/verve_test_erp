@@ -227,7 +227,7 @@
  ], 
  "icon": "icon-file-text", 
  "idx": 1, 
- "modified": "2015-02-05 05:11:45.120566", 
+ "modified": "2015-09-22 11:59:26.784744", 
  "modified_by": "Administrator", 
  "module": "HR", 
  "name": "Salary Structure", 
@@ -249,6 +249,7 @@
   }, 
   {
    "amend": 0, 
+   "apply_user_permissions": 1, 
    "create": 1, 
    "email": 1, 
    "permlevel": 0, 

@@ -52,19 +52,21 @@ class Employee(Document):
 			self.update_user_permissions()
 
 		ofc = frappe.db.sql("select dv.parent from `tabDefaultValue` dv, `tabUserRole` ur where \
-			dv.defkey='Offices' and dv.defvalue='%s' and ur.role='HR Manager' and ur.parent=dv.parent\
+			dv.defkey='Offices' and dv.defvalue='%s' and ur.role='HR Manager' or 'HR User' and ur.parent=dv.parent\
 			"%(self.office),as_list=1)
-		if ofc:
-			perm = frappe.db.sql("select name from `tabDefaultValue` where parent = '%s' and defkey='Employee'\
-				and defvalue='%s'"%(ofc[0][0],self.name),as_list=1)
-			if not perm:
-				d = frappe.new_doc("DefaultValue")
-				d.parentfield = 'system_defaults'
-				d.parenttype = 'User Permission'
-				d.parent = ofc[0][0]
-				d.defkey = 'Employee'
-				d.defvalue = self.name 
-				d.insert()
+		for users in ofc:
+
+			if users:
+				perm = frappe.db.sql("select name from `tabDefaultValue` where parent = '%s' and defkey='Employee'\
+					and defvalue='%s'"%(users[0],self.name),as_list=1)
+				if not perm:
+					d = frappe.new_doc("DefaultValue")
+					d.parentfield = 'system_defaults'
+					d.parenttype = 'User Permission'
+					d.parent = users[0]
+					d.defkey = 'Employee'
+					d.defvalue = self.name 
+					d.insert()
 			
 	def update_user_permissions(self):
 		frappe.permissions.add_user_permission("Employee", self.name, self.user_id)
