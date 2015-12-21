@@ -189,3 +189,20 @@ def get_project(doctype, txt, searchfield, start, page_len, filters):
 			limit %(start)s, %(page_len)s """ % {'key': searchfield,
 			'txt': "%%%s%%" % txt, 'mcond':get_match_cond(doctype),
 			'start': start, 'page_len': page_len})
+
+
+
+def get_permission_query_conditions(user):
+	if not user: user = frappe.session.user
+
+	if "System Manager" in frappe.get_roles(user):
+		return None
+	else:
+		return """(tabTask.owner = '{user}' or  tabTask._assign like '%{user}%' )"""\
+			.format(user=frappe.db.escape(user))
+
+def has_permission(doc, user):
+	if "System Manager" in frappe.get_roles(user):
+		return True
+	else:
+		return doc.owner==user 
