@@ -50,7 +50,8 @@
   {
    "fieldname": "region", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Region", 
    "options": "Regions", 
    "permlevel": 0, 
@@ -59,7 +60,8 @@
   {
    "fieldname": "zone", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Zone", 
    "options": "Zones", 
    "permlevel": 0, 
@@ -68,7 +70,8 @@
   {
    "fieldname": "church_group", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Group Church", 
    "options": "Group Churches", 
    "permlevel": 0, 
@@ -96,7 +99,8 @@
   {
    "fieldname": "project", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Project", 
    "oldfieldname": "project", 
    "oldfieldtype": "Link", 
@@ -119,7 +123,8 @@
   {
    "fieldname": "church", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Church", 
    "options": "Churches", 
    "permlevel": 0, 
@@ -128,16 +133,19 @@
   {
    "fieldname": "pcf", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "PCF", 
    "options": "PCFs", 
    "permlevel": 0, 
-   "precision": ""
+   "precision": "", 
+   "read_only": 0
   }, 
   {
    "fieldname": "senior_cell", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Senior Cell", 
    "options": "Senior Cells", 
    "permlevel": 0, 
@@ -146,7 +154,8 @@
   {
    "fieldname": "cell", 
    "fieldtype": "Link", 
-   "in_list_view": 1, 
+   "hidden": 1, 
+   "in_list_view": 0, 
    "label": "Cell", 
    "options": "Cells", 
    "permlevel": 0, 
@@ -233,6 +242,7 @@
   {
    "fieldname": "actual_budget", 
    "fieldtype": "Currency", 
+   "hidden": 1, 
    "label": "Actual Budget", 
    "oldfieldname": "actual_budget", 
    "oldfieldtype": "Currency", 
@@ -281,7 +291,7 @@
  "icon": "icon-check", 
  "idx": 1, 
  "max_attachments": 5, 
- "modified": "2015-04-01 16:31:11.543196", 
+ "modified": "2015-12-24 16:43:33.760677", 
  "modified_by": "Administrator", 
  "module": "Projects", 
  "name": "Task", 

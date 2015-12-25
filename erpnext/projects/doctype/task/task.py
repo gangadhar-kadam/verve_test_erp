@@ -205,4 +205,8 @@ def has_permission(doc, user):
 	if "System Manager" in frappe.get_roles(user):
 		return True
 	else:
-		return doc.owner==user 
+		res=frappe.db.sql("select name from `tabTask` where owner='%s' or _assign like '%%%s%%'"%(user,user))
+		if res:
+			return True
+		else:
+			return False
