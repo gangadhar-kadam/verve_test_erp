@@ -127,7 +127,7 @@ def upload():
 			error = True
 			ret.append('Error for row (#%d) %s : %s' % (row_idx,
 				len(row)>1 and row[1] or "", cstr(e)))
-			frappe.errprint(frappe.get_traceback())
+			# frappe.errprint(frappe.get_traceback())
 
 	if error:
 		frappe.db.rollback()

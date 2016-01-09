@@ -122,7 +122,7 @@ class Task(Document):
 
 	def validate(self):
 		if self.exp_start_date and self.exp_end_date and getdate(self.exp_start_date) > getdate(self.exp_end_date):
-			frappe.throw(_("'Expected Start Date' can not be greater than 'Expected End Date'"))
+			frappe.throw(_("'Expected End Date' should be greater than 'Expected Start Date'"))
 
 		if self.act_start_date and self.act_end_date and getdate(self.act_start_date) > getdate(self.act_end_date):
 			frappe.throw(_("'Actual Start Date' can not be greater than 'Actual End Date'"))
